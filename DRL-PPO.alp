@@ -36,7 +36,49 @@ if (Math.abs(targetGrade - 0.25) > 1e-9) {
     throw new IllegalStateException("dispatch.v1-27 requires targetGrade=0.25");
 }
 
-episodeId = java.util.UUID.randomUUID().toString();
+if (experimentRunIndex <= 0 || experimentSeed <= 0) {
+    throw new IllegalStateException(
+        "experimentRunIndex and experimentSeed must be positive"
+    );
+}
+
+if (
+    Math.abs(numTrucks - 20.0) > 1e-9
+    || Math.abs(targetGrade - 0.25) > 1e-9
+    || Math.abs(rlShiftSeconds - 28800.0) > 1e-9
+    || Math.abs(rlWindowSeconds - 7200.0) > 1e-9
+    || Math.abs(waitRefSeconds - 200.0) > 1e-9
+    || Math.abs(targetOreTons2h - 20000.0) > 1e-9
+    || Math.abs(targetOreTonsShift - 80000.0) > 1e-9
+    || Math.abs(wWait - 1.0) > 1e-9
+    || Math.abs(wGrade2h - 1.0) > 1e-9
+    || Math.abs(wGradeShift - 6.0) > 1e-9
+    || Math.abs(wProduction - 4.0) > 1e-9
+    || Math.abs(wGradeAction - 0.15) > 1e-9
+    || Math.abs(gradePriorTons - 20000.0) > 1e-9
+    || Math.abs(gradeActionDeltaClip - 0.10) > 1e-9
+    || Math.abs(wWasteLag - 0.02) > 1e-9
+    || Math.abs(productionLagTolerance - 0.05) > 1e-9
+) {
+    throw new IllegalStateException(
+        "Reward parameters do not match " + rewardContractId
+    );
+}
+
+getEngine().setDefaultRandomGenerator(
+    new java.util.Random(experimentSeed)
+);
+
+episodeId = rewardContractId
+    + "-run-" + experimentRunIndex
+    + "-seed-" + experimentSeed;
+pendingClosedWindows.clear();
+
+traceln(
+    "[P0] contract=" + rewardContractId
+    + " run_index=" + experimentRunIndex
+    + " experiment_seed=" + experimentSeed
+);
 decisionSequence = 0;
 episodeStarted = false;
 episodeClosed = false;
@@ -1457,7 +1499,7 @@ lastDecisionTimeSec = time(SECOND);]]></StartupCode>
 					<Properties SaveInSnapshot="true" Constant="false" AccessType="public" StaticVariable="false">
 						<Type><![CDATA[double]]></Type>        
 						<InitialValue Class="CodeValue">
-							<Code><![CDATA[0.005]]></Code>
+							<Code><![CDATA[0.02]]></Code>
 						</InitialValue>
 					</Properties>
 				</Variable>
@@ -1472,14 +1514,14 @@ lastDecisionTimeSec = time(SECOND);]]></StartupCode>
 					<Properties SaveInSnapshot="true" Constant="false" AccessType="public" StaticVariable="false">
 						<Type><![CDATA[double]]></Type>        
 						<InitialValue Class="CodeValue">
-							<Code><![CDATA[0.1]]></Code>
+							<Code><![CDATA[0.05]]></Code>
 						</InitialValue>
 					</Properties>
 				</Variable>
 				<Variable Class="PlainVariable">
 					<Id>1790490724918</Id>
 					<Name><![CDATA[closedWindowOreTons]]></Name>
-					<X>-630</X><Y>-835</Y>
+					<X>-800</X><Y>-780</Y>
 					<Label><X>10</X><Y>0</Y></Label>
 					<PublicFlag>false</PublicFlag>
 					<PresentationFlag>true</PresentationFlag>
@@ -1488,6 +1530,36 @@ lastDecisionTimeSec = time(SECOND);]]></StartupCode>
 						<Type><![CDATA[double[]]]></Type>        
 						<InitialValue Class="CodeValue">
 							<Code><![CDATA[new double[4]]]></Code>
+						</InitialValue>
+					</Properties>
+				</Variable>
+				<Variable Class="PlainVariable">
+					<Id>1791513434850</Id>
+					<Name><![CDATA[rewardContractId]]></Name>
+					<X>-800</X><Y>-840</Y>
+					<Label><X>10</X><Y>0</Y></Label>
+					<PublicFlag>false</PublicFlag>
+					<PresentationFlag>true</PresentationFlag>
+					<ShowLabel>true</ShowLabel>
+					<Properties SaveInSnapshot="true" Constant="false" AccessType="public" StaticVariable="false">
+						<Type><![CDATA[String]]></Type>        
+						<InitialValue Class="CodeValue">
+							<Code><![CDATA["dispatch-reward-v2"]]></Code>
+						</InitialValue>
+					</Properties>
+				</Variable>
+				<Variable Class="PlainVariable">
+					<Id>1791514553646</Id>
+					<Name><![CDATA[pendingClosedWindows]]></Name>
+					<X>-800</X><Y>-810</Y>
+					<Label><X>10</X><Y>0</Y></Label>
+					<PublicFlag>false</PublicFlag>
+					<PresentationFlag>true</PresentationFlag>
+					<ShowLabel>true</ShowLabel>
+					<Properties SaveInSnapshot="true" Constant="false" AccessType="public" StaticVariable="false">
+						<Type><![CDATA[java.util.List<WindowSummary>]]></Type>        
+						<InitialValue Class="CodeValue">
+							<Code><![CDATA[new java.util.ArrayList<WindowSummary>()]]></Code>
 						</InitialValue>
 					</Properties>
 				</Variable>
@@ -2012,6 +2084,54 @@ lastDecisionTimeSec = time(SECOND);]]></StartupCode>
 						</DefaultValue>
 						<ParameterEditor>
 							<Id>1790474918807</Id>
+							<EditorContolType>TEXT_BOX</EditorContolType>
+							<MinSliderValue><![CDATA[0]]></MinSliderValue>
+							<MaxSliderValue><![CDATA[100]]></MaxSliderValue>
+							<DelimeterType>NO_DELIMETER</DelimeterType>
+						</ParameterEditor>
+					</Properties>                 
+				</Variable>
+				<Variable Class="Parameter">
+					<Id>1791514699057</Id>
+					<Name><![CDATA[experimentRunIndex]]></Name>
+					<X>-810</X><Y>-750</Y>
+					<Label><X>10</X><Y>0</Y></Label>
+					<PublicFlag>false</PublicFlag>
+					<PresentationFlag>true</PresentationFlag>
+					<ShowLabel>true</ShowLabel>
+					<Properties SaveInSnapshot="true" ModificatorType="STATIC">
+						<Type><![CDATA[long]]></Type>
+						<UnitType><![CDATA[NONE]]></UnitType>
+						<SdArray>false</SdArray>
+						<DefaultValue Class="CodeValue">
+							<Code><![CDATA[1]]></Code>
+						</DefaultValue>
+						<ParameterEditor>
+							<Id>1791514699055</Id>
+							<EditorContolType>TEXT_BOX</EditorContolType>
+							<MinSliderValue><![CDATA[0]]></MinSliderValue>
+							<MaxSliderValue><![CDATA[100]]></MaxSliderValue>
+							<DelimeterType>NO_DELIMETER</DelimeterType>
+						</ParameterEditor>
+					</Properties>                 
+				</Variable>
+				<Variable Class="Parameter">
+					<Id>1791514725026</Id>
+					<Name><![CDATA[experimentSeed]]></Name>
+					<X>-810</X><Y>-720</Y>
+					<Label><X>10</X><Y>0</Y></Label>
+					<PublicFlag>false</PublicFlag>
+					<PresentationFlag>true</PresentationFlag>
+					<ShowLabel>true</ShowLabel>
+					<Properties SaveInSnapshot="true" ModificatorType="STATIC">
+						<Type><![CDATA[long]]></Type>
+						<UnitType><![CDATA[NONE]]></UnitType>
+						<SdArray>false</SdArray>
+						<DefaultValue Class="CodeValue">
+							<Code><![CDATA[202610090001L]]></Code>
+						</DefaultValue>
+						<ParameterEditor>
+							<Id>1791514725024</Id>
 							<EditorContolType>TEXT_BOX</EditorContolType>
 							<MinSliderValue><![CDATA[0]]></MinSliderValue>
 							<MaxSliderValue><![CDATA[100]]></MaxSliderValue>
@@ -3142,6 +3262,10 @@ DispatchRequest request = DispatchRequest.newBuilder()
     .setSimTimeDeltaSeconds(simDeltaSeconds)
     .setTerminated(false)
     .setTruncated(false)
+    .addAllClosedWindows(pendingClosedWindows)
+	.setExperimentRunIndex(experimentRunIndex)
+	.setExperimentSeed(experimentSeed)
+	.setRewardContractId(rewardContractId)
     .build();
 
 DispatchResponse response = rlClient.getDispatchResult(request);
@@ -3160,6 +3284,7 @@ double nextGradeActionReward =
     calculateGradeActionReward(t, action);
 
 // 只有 RPC 成功后才消费 reward，避免异常时丢失
+pendingClosedWindows.clear();
 episodeStarted = true;
 previousAction = action;
 lastDispatchObservation = obs;
@@ -6671,45 +6796,7 @@ if (gap < 0.0) {
     d = gap / 0.01;
 }
 
-if (d <= 1.0) {
-    // 合法区间内仅保留很小的中心偏好
-    // 目标点0.60，合法边界0.50
-    return 0.5 + 0.1 * (1.0 - d);
-}
-
-// 超出合法区间立即转为负值
-return -clip(
-    (d - 1.0) / 0.5,
-    0.0,
-    1.0
-);
-/*stage1
-double d;
-
-if (gap < 0.0) {
-    d = -gap / 0.02;
-} else {
-    d = gap / 0.01;
-}
-
-// 安全区：目标点1.0，归一化偏差0.8处为0.5
-if (d <= 0.8) {
-    return 1.0 - 0.625 * d;
-}
-
-// 接近合法边界：奖励从0.5连续降低到0
-if (d <= 1.0) {
-    return 0.5 * (
-        1.0 - (d - 0.8) / 0.2
-    );
-}
-
-// 超出合法区间立即为负，d=1.5时达到-1
-return -clip(
-    (d - 1.0) / 0.5,
-    0.0,
-    1.0
-);*/]]></Body>
+return clip(1.0 - d, -1.0, 1.0);]]></Body>
 				</Function>
 				<Function AccessType="default" StaticFunction="false">
 					<ReturnModificator>RETURNS_VALUE</ReturnModificator>
@@ -6769,7 +6856,26 @@ double gap =
 closedWindowGrades[currentWindowIndex] = grade;
 closedWindowGradeGaps[currentWindowIndex] = gap;
 
-pendingGrade2hReward += wGrade2h * gradeReward(gap);
+double rawGradeReward = gradeReward(gap);
+double weightedGradeReward = wGrade2h * rawGradeReward;
+
+pendingGrade2hReward += weightedGradeReward;
+
+pendingClosedWindows.add(
+    WindowSummary.newBuilder()
+        .setWindowIndex(currentWindowIndex)
+        .setWindowStartSeconds(currentWindowIndex * rlWindowSeconds)
+        .setWindowEndSeconds((currentWindowIndex + 1) * rlWindowSeconds)
+        .setOreTons(windowOreTons)
+        .setMetalTons(windowMetalTons)
+        .setGrade(grade)
+        .setGradeGap(gap)
+        .setGradeRewardRaw(rawGradeReward)
+        .setGradeRewardWeighted(weightedGradeReward)
+        .setViolationUpper(gap < -0.02)
+        .setViolationLower(gap > 0.01)
+        .build()
+);
 
 currentWindowIndex++;
 windowOreTons = 0.0;
@@ -6919,10 +7025,14 @@ DispatchRequest request = DispatchRequest.newBuilder()
 	)
     .setTerminated(true)
     .setTruncated(false)
+	.addAllClosedWindows(pendingClosedWindows)
+	.setExperimentRunIndex(experimentRunIndex)
+	.setExperimentSeed(experimentSeed)
+	.setRewardContractId(rewardContractId)
     .build();
 
 rlClient.getDispatchResult(request);
-
+pendingClosedWindows.clear();
 episodeClosed = true;
 getEngine().finish();]]></Body>
 				</Function>
@@ -19465,6 +19575,12 @@ statCycleTime.add( timeSpent );]]></Body>
 				<Parameter>
 					<ParameterName><![CDATA[currentDispatchPolicy]]></ParameterName>
 				</Parameter>
+				<Parameter>
+					<ParameterName><![CDATA[experimentRunIndex]]></ParameterName>
+				</Parameter>
+				<Parameter>
+					<ParameterName><![CDATA[experimentSeed]]></ParameterName>
+				</Parameter>
 			</Parameters>			
 			<PresentationProperties>
 				<EnableZoomAndPanning>true</EnableZoomAndPanning>
@@ -19489,7 +19605,7 @@ statCycleTime.add( timeSpent );]]></Body>
 			<Name><![CDATA[RL_Training]]></Name>
 			<CommandLineArguments><![CDATA[]]></CommandLineArguments>
 			<MaximumMemory>512</MaximumMemory>
-			<RandomNumberGenerationType>customGenerator</RandomNumberGenerationType>
+			<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
 			<CustomGeneratorCode>new Random()</CustomGeneratorCode>
 			<SeedValue>1</SeedValue>
 			<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
@@ -19498,8 +19614,8 @@ statCycleTime.add( timeSpent );]]></Body>
 
 
 			<AllowParallelEvaluations>false</AllowParallelEvaluations>
-			<UseFreeformParameters>false</UseFreeformParameters>
-			<NumberOfRuns>10</NumberOfRuns>
+			<UseFreeformParameters>true</UseFreeformParameters>
+			<NumberOfRuns>3</NumberOfRuns>
 			<FreeformParamValue>	
 				<Id>1776757906246</Id>
 			</FreeformParamValue>
@@ -19565,6 +19681,18 @@ statCycleTime.add( timeSpent );]]></Body>
 			</FreeformParamValue>
 			<FreeformParamValue>	
 				<Id>1790474918809</Id>
+			</FreeformParamValue>
+			<FreeformParamValue>	
+				<Id>1791514699057</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[(long) index + 1L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>	
+				<Id>1791514725026</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202610090001L + (long) index]]></Code>
+				</Expression>
 			</FreeformParamValue>
 			<RangeVariationParamValue>	
 				<Id>1776757906246</Id>
@@ -19657,6 +19785,14 @@ statCycleTime.add( timeSpent );]]></Body>
 					<Code><![CDATA[3]]></Code>
 				</Expression>
 			</RangeVariationParamValue>
+			<RangeVariationParamValue>	
+				<Id>1791514699057</Id>
+				<Type>FIXED</Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>	
+				<Id>1791514725026</Id>
+				<Type>FIXED</Type>
+			</RangeVariationParamValue>
 			<ModelTimeProperties>
 				<StopOption><![CDATA[Stop at specified time]]></StopOption>
 				<InitialDate><![CDATA[1776729600000]]></InitialDate>	
@@ -19671,9 +19807,9 @@ statCycleTime.add( timeSpent );]]></Body>
 				<ShowDeveloperPanelOnStart>true</ShowDeveloperPanelOnStart>
 			</PresentationProperties>
 			<ReplicationsProperties>
-				<UseReplication>true</UseReplication>
+				<UseReplication>false</UseReplication>
 				<FixedReplicationsNumber>true</FixedReplicationsNumber>
-				<ReplicationPerIteration>50</ReplicationPerIteration>
+				<ReplicationPerIteration>4</ReplicationPerIteration>
 				<MinimumReplication>2</MinimumReplication>
 				<MaximumReplication>10</MaximumReplication>
 				<ConfidenceLevel>LEVEL_80</ConfidenceLevel>
